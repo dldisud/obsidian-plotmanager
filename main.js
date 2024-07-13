@@ -197,31 +197,104 @@ class PlotMasterView extends ItemView {
     renderVisualization(containerEl, plotPoints, characters) {
         const visualizationEl = containerEl.createEl('div', { cls: 'plotmaster-visualization' });
         visualizationEl.createEl('h3', { text: 'Story Visualization' });
-
-        let mermaidDef = 'graph TD;\n';
-
-        plotPoints.forEach(plot => {
-            mermaidDef += `    ${plot.basename}[${plot.basename}];\n`;
-        });
-
-        characters.forEach(character => {
-            mermaidDef += `    ${character.basename}((${character.basename}));\n`;
-        });
-
+    
+        const graphEl = visualizationEl.createEl('div', { cls: 'plotmaster-graph' });
+    
+        // Create plot points
         plotPoints.forEach((plot, index) => {
-            if (index < plotPoints.length - 1) {
-                mermaidDef += `    ${plot.basename} --> ${plotPoints[index + 1].basename};\n`;
-            }
-            if (index < characters.length) {
-                mermaidDef += `    ${plot.basename} -.-> ${characters[index].basename};\n`;
-            }
+            const plotEl = graphEl.createEl('div', { 
+                cls: 'plotmaster-node plotmaster-plot',
+                text: plot.basename
+            });
+            plotEl.style.top = `${index * 60 + 10}px`;
         });
-
-        const mermaidEl = visualizationEl.createEl('pre', { cls: 'mermaid', text: mermaidDef });
-
-        if (window.mermaid) {
-            window.mermaid.init(undefined, mermaidEl);
+    
+        // Create characters
+        characters.forEach((character, index) => {
+            const charEl = graphEl.createEl('div', { 
+                cls: 'plotmaster-node plotmaster-character',
+                text: character.basename
+            });
+            charEl.style.top = `${index * 60 + 10}px`;
+        });
+    
+        // Add connections
+        this.createConnections(graphEl, plotPoints.length, characters.length);
+    
+        // Add CSS
+        this.addVisualizationStyles(plotPoints.length, characters.length);
+    }
+    
+    createConnections(container, plotCount, charCount) {
+        const connContainer = container.createEl('div', { cls: 'plotmaster-connections' });
+        
+        // Connections between plot points
+        for (let i = 0; i < plotCount - 1; i++) {
+            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-plot' });
+            conn.style.top = `${i * 60 + 30}px`;
+            conn.style.height = '60px';
         }
+    
+        // Connections between plots and characters
+        const minCount = Math.min(plotCount, charCount);
+        for (let i = 0; i < minCount; i++) {
+            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-character' });
+            conn.style.top = `${i * 60 + 20}px`;
+        }
+    }
+    
+    addVisualizationStyles(plotCount, charCount) {
+        const style = document.createElement('style');
+        style.textContent = `
+            .plotmaster-graph {
+                position: relative;
+                height: ${Math.max(plotCount, charCount) * 60 + 20}px;
+                border: 1px solid var(--background-modifier-border);
+                margin-top: 20px;
+                background-color: var(--background-secondary);
+            }
+            .plotmaster-node {
+                position: absolute;
+                padding: 5px 10px;
+                border-radius: 5px;
+                background-color: var(--background-primary);
+                border: 1px solid var(--background-modifier-border);
+                max-width: 45%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                z-index: 2;  // 추가된 부분
+            }
+            .plotmaster-plot {
+                left: 10px;
+            }
+            .plotmaster-character {
+                right: 10px;
+            }
+            .plotmaster-connections {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                pointer-events: none;
+                z-index: 1;  // 추가된 부분
+            }
+            .plotmaster-connection {
+                position: absolute;
+                background-color: var(--text-muted);
+            }
+            .plotmaster-connection-plot {
+                left: calc(25% - 1px);
+                width: 2px;
+            }
+            .plotmaster-connection-character {
+                left: 25%;
+                right: 25%;
+                height: 2px;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     async onClose() {
