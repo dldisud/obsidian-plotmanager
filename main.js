@@ -291,119 +291,81 @@ class PlotMasterView extends ItemView {
         const visualizationEl = containerEl.createEl('div', { cls: 'plotmaster-visualization' });
         visualizationEl.createEl('h3', { text: 'Story visualization' });
     
-        const graphEl = visualizationEl.createEl('div', { cls: 'plotmaster-graph' });
+        works.forEach(async (work) => {
+            const workEl = visualizationEl.createEl('div', { cls: 'plotmaster-work-container' });
+            
+            const workHeader = workEl.createEl('div', { cls: 'plotmaster-work-header' });
+            workHeader.createEl('h4', { text: work.name, cls: 'plotmaster-work-title' });
     
-        works.forEach(async (work, workIndex) => {
+            const contentEl = workEl.createEl('div', { cls: 'plotmaster-work-content' });
+            
+            const plotPointsEl = contentEl.createEl('div', { cls: 'plotmaster-column plotmaster-plotpoints' });
+            plotPointsEl.createEl('h5', { text: 'Plot Points' });
+            
+            const charactersEl = contentEl.createEl('div', { cls: 'plotmaster-column plotmaster-characters' });
+            charactersEl.createEl('h5', { text: 'Characters' });
+    
             const plotPoints = await this.getPlotPoints(work);
             const characters = await this.getCharacters(work);
-            
-            // Create work node
-            const workEl = graphEl.createEl('div', { 
-                cls: 'plotmaster-node plotmaster-work',
-                text: work.name
-            });
-            workEl.style.top = `${workIndex * 200}px`;
-            
-            // Create plot points
-            plotPoints.forEach((plot, index) => {
-                const plotEl = graphEl.createEl('div', { 
-                    cls: 'plotmaster-node plotmaster-plot',
+    
+            plotPoints.forEach((plot) => {
+                plotPointsEl.createEl('div', { 
+                    cls: 'plotmaster-item plotmaster-plot',
                     text: plot.basename
                 });
-                plotEl.style.top = `${workIndex * 200 + index * 60 + 50}px`;
-                plotEl.style.left = '200px';
             });
-        
-            // Create characters
-            characters.forEach((character, index) => {
-                const charEl = graphEl.createEl('div', { 
-                    cls: 'plotmaster-node plotmaster-character',
+    
+            characters.forEach((character) => {
+                charactersEl.createEl('div', { 
+                    cls: 'plotmaster-item plotmaster-character',
                     text: character.basename
                 });
-                charEl.style.top = `${workIndex * 200 + index * 60 + 50}px`;
-                charEl.style.right = '200px';
             });
-        
-            // Add connections
-            this.createConnections(graphEl, work, plotPoints.length, characters.length, workIndex);
         });
     
-        // Add CSS
-        this.addVisualizationStyles();
+        this.addImprovedVisualizationStyles();
     }
     
-    createConnections(container, work, plotCount, charCount, workIndex) {
-        const connContainer = container.createEl('div', { cls: 'plotmaster-connections' });
-        
-        // Connections between work and plot points
-        for (let i = 0; i < plotCount; i++) {
-            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-work-plot' });
-            conn.style.top = `${workIndex * 200 + i * 60 + 70}px`;
-            conn.style.left = '100px';
-            conn.style.width = '100px';
-        }
-    
-        // Connections between work and characters
-        for (let i = 0; i < charCount; i++) {
-            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-work-character' });
-            conn.style.top = `${workIndex * 200 + i * 60 + 70}px`;
-            conn.style.right = '100px';
-            conn.style.width = '100px';
-        }
-    }
-    
-    addVisualizationStyles() {
+    addImprovedVisualizationStyles() {
         const style = document.createElement('style');
         style.textContent = `
-            .plotmaster-graph {
-                position: relative;
-                border: 1px solid var(--background-modifier-border);
+            .plotmaster-visualization {
                 margin-top: 20px;
-                background-color: var(--background-secondary);
-                padding: 20px;
-            }
-            .plotmaster-node {
-                position: absolute;
-                padding: 5px 10px;
-                border-radius: 5px;
-                background-color: var(--background-primary);
                 border: 1px solid var(--background-modifier-border);
-                max-width: 150px;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                z-index: 2;
+                padding: 10px;
+                background-color: var(--background-secondary);
             }
-            .plotmaster-work {
-                left: 10px;
+            .plotmaster-work-container {
+                margin-bottom: 30px;
+                padding: 10px;
+                border: 1px solid var(--background-modifier-border);
+                border-radius: 5px;
+            }
+            .plotmaster-work-header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            .plotmaster-work-title {
                 font-weight: bold;
             }
-            .plotmaster-plot {
-                left: 200px;
+            .plotmaster-work-content {
+                display: flex;
+                justify-content: space-between;
             }
-            .plotmaster-character {
-                right: 10px;
+            .plotmaster-column {
+                width: 48%;
             }
-            .plotmaster-connections {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                pointer-events: none;
-                z-index: 1;
+            .plotmaster-column h5 {
+                text-align: center;
+                margin-bottom: 10px;
             }
-            .plotmaster-connection {
-                position: absolute;
-                background-color: var(--text-muted);
-                height: 2px;
+            .plotmaster-item {
+                padding: 5px 10px;
+                margin: 5px 0;
+                background-color: var(--background-primary);
+                border: 1px solid var(--background-modifier-border);
+                border-radius: 5px;
             }
-            .plotmaster-connection-work-plot {
-                left: 100px;
-            }
-            .plotmaster-connection-work-character {
-                right: 100px
-}
         `;
         document.head.appendChild(style);
     }
