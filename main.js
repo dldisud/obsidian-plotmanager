@@ -29,32 +29,7 @@ class PlotMasterPlugin extends Plugin {
 
         
 
-'Story Visualization' → 'Story visualization'
-뷰 타입 이름 수정: "Remove -view"는 뷰 타입 이름에서 "-view" 접미사를 제거하라는 의미입니다. 수정해야 할 부분:
-return 'plotmaster-view'; → return 'plotmaster';
-이러한 수정 사항을 반영하기 위해 코드를 다음과 같이 변경해야 합니다:
 
-
-PlotMaster UI Fixes
-Click to open code
-이러한 변경 사항을 적용하면 Obsidian 플러그인 가이드라인에 더 잘 부합하게 됩니다. 이는 사용자 경험의 일관성을 향상시키고, 플러그인이 Obsidian의 전반적인 디자인 철학과 더 잘 어울리게 만듭니다.
-
-이 수정 사항들을 적용한 후 플러그인을 다시 제출하면, 심사 과정을 더 원활하게 통과할 수 있을 것입니다.
-
-Copy
-Retry
-
-
-Claude can make mistakes. Please double-check responses.
-
-
-
-
-
-3.5 Sonnet
-1
-
-PlotMaster UI Fixes
 
 // PlotMasterPlugin 클래스 내부
         this.addCommand({
