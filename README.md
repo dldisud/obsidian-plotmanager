@@ -1,131 +1,177 @@
-# PlotMaster 플러그인 기능 상세 설명
+# PlotMaster
 
-## 1. 플롯 포인트 생성
+## 한국어
 
-### 설명
-스토리의 주요 사건이나 전개를 나타내는 플롯 포인트를 생성합니다.
+PlotMaster는 작가들이 여러 작품의 플롯과 캐릭터를 효과적으로 관리할 수 있도록 도와주는 Obsidian 플러그인입니다.
 
-### 사용법
-- 명령어: `Create Plot Point`
-- 기본 폴더: `PlotPoints`
-- 파일 명명 규칙: 타임스탬프 (예: 1720845016174.md)
+### 주요 기능
 
-### 속성
-- title: 플롯 포인트의 제목
-- scene: 관련된 장면 또는 챕터
-- status: 현재 상태 (예: planning, in-progress, completed)
+1. **작품 관리**
+   - 각 작품을 독립적인 폴더로 관리합니다.
+   - 예: "대하소설", "단편집", "SF 시리즈" 등의 작품 폴더를 만들 수 있습니다.
 
-### 예시
-```yaml
----
-title: 주인공의 첫 번째 시련
-scene: 3장
-status: planning
----
+2. **플롯 포인트 생성**
+   - 각 작품 내에서 플롯 포인트를 쉽게 생성하고 관리할 수 있습니다.
+   - 예시 플롯 포인트: "주인공의 첫 모험", "반전 사건", "클라이맥스" 등
 
-플롯 포인트에 대한 상세 설명...
-```
+3. **캐릭터 생성**
+   - 작품별로 캐릭터를 생성하고 관리할 수 있습니다.
+   - 캐릭터 정보 예: 이름, 역할, 배경, 성격 등
 
-## 2. 캐릭터 생성
+4. **태그 필터링**
+   - 태그를 사용하여 플롯 포인트와 캐릭터를 필터링할 수 있습니다.
+   - 예: "#중요", "#미해결", "#주인공" 등의 태그로 필터링
 
-### 설명
-스토리의 등장인물에 대한 상세 프로필을 생성합니다.
+5. **상태 표시**
+   - 플롯 포인트의 현재 상태를 시각적으로 표시합니다.
+   - 상태 예: "계획 중", "초고 작성", "수정 중", "완료"
 
-### 사용법
-- 명령어: `Create Character`
-- 기본 폴더: `Characters`
-- 파일 명명 규칙: 캐릭터 이름 (예: 아이린.md)
+6. **시각화**
+   - 작품, 플롯 포인트, 캐릭터 간의 관계를 그래프로 시각화합니다.
+   - 예: 주인공과 관련된 플롯 포인트들을 한눈에 볼 수 있습니다.
 
-### 속성
-- name: 캐릭터의 이름
-- role: 스토리 내 역할
-- background: 캐릭터의 배경 이야기
-- personality: 성격 특성
+7. **커스터마이즈 가능한 설정**
+   - 폴더 구조와 플러그인 동작을 사용자의 필요에 맞게 조정할 수 있습니다.
 
-### 예시
-```yaml
----
-name: 아이린
-role: 주인공
-background: 어릴 때 고아가 되어 조부모에 의해 길러짐
-personality: 결단력 있고, 친절하며, 고집이 있음
-tags: [히로인, 천사, 중립, 천재, 엄마]
----
+### 상세 사용 방법
 
-캐릭터에 대한 상세 설명...
-```
+1. **새 작품 생성**
+   - 리본 메뉴의 PlotMaster 아이콘을 클릭하거나 명령 팔레트에서 "Create new work" 명령을 사용합니다.
+   - 예: "미스터리 소설" 이라는 이름으로 새 작품을 생성합니다.
 
-## 3. 태그 시스템
+2. **플롯 포인트 추가**
+   - 작품을 선택한 후 "Create plot point" 명령을 사용합니다.
+   - 예시:
+     ```markdown
+     ---
+     title: 살인 사건 발생
+     scene: 호텔 로비
+     status: 초고 작성
+     ---
 
-### 설명
-플롯 포인트와 캐릭터에 태그를 추가하여 쉽게 분류하고 필터링할 수 있습니다.
+     탐정 주인공이 호텔 로비에서 첫 번째 살인 사건을 목격합니다.
+     ```
 
-### 사용법
-- YAML 프론트매터에 태그 추가
-- 설정에서 태그 필터를 사용하여 특정 태그를 가진 항목만 표시
+3. **캐릭터 추가**
+   - 작품을 선택한 후 "Create character" 명령을 사용합니다.
+   - 예시:
+     ```markdown
+     ---
+     name: 김형사
+     role: 주인공
+     background: 20년 경력의 베테랑 형사
+     personality: 고집이 세지만 정의감이 강함
+     ---
 
-### 예시
-```yaml
-tags: [히로인, 천사, 중립, 천재, 엄마]
-```
+     김형사는 이번 연쇄 살인 사건의 수사를 맡게 된 주인공입니다.
+     ```
 
-## 4. 상태 추적
+4. **작품 구조 보기**
+   - PlotMaster 뷰에서 작품을 선택하여 플롯 포인트와 캐릭터 목록을 확인합니다.
+   - 예: "미스터리 소설" 작품을 클릭하면 모든 플롯 포인트와 캐릭터가 표시됩니다.
 
-### 설명
-플롯 포인트의 현재 상태를 추적하여 스토리의 진행 상황을 모니터링합니다.
+5. **태그 사용**
+   - 플롯 포인트나 캐릭터에 태그를 추가하고 필터링합니다.
+   - 예: "#용의자" 태그를 사용해 모든 용의자 캐릭터를 쉽게 찾을 수 있습니다.
 
-### 사용법
-- 플롯 포인트 파일의 `status` 필드 설정
-- PlotMaster 뷰에서 상태 표시
+6. **시각화 활용**
+   - 설정에서 시각화 기능을 활성화하고 작품의 구조를 그래프로 확인합니다.
+   - 예: 주요 사건들과 연관된 캐릭터들의 관계를 한눈에 파악할 수 있습니다.
 
-### 예시
-```yaml
-status: planning
-```
+### 설정 조정
 
-## 5. 시각화
+설정 탭에서 다음과 같은 옵션을 조정할 수 있습니다:
+- Works 폴더 경로 (기본값: 'Works')
+- Plot points 폴더 이름 (기본값: 'PlotPoints')
+- Characters 폴더 이름 (기본값: 'Characters')
+- 태그 필터
+- 상태 표시 활성화/비활성화
+- 시각화 기능 활성화/비활성화
 
-### 설명
-플롯 포인트와 캐릭터 간의 관계를 시각적으로 표현합니다.
+## English
 
-### 사용법
-- 플러그인 설정에서 시각화 기능 활성화
-- PlotMaster 뷰에서 그래프 확인
+PlotMaster is an Obsidian plugin designed to help writers effectively manage plots and characters across multiple works.
 
-### 특징
-- 플롯 포인트는 왼쪽에, 캐릭터는 오른쪽에 배치
-- 플롯 포인트 간의 연결선으로 스토리 흐름 표시
-- 플롯 포인트와 캐릭터 간의 연결선으로 관계 표시
+### Key Features
 
-## 6. 커스텀 속성 추가
+1. **Work Management**
+   - Manage each work in its own independent folder.
+   - Example: Create work folders like "Epic Novel", "Short Story Collection", "SF Series", etc.
 
-### 설명
-필요에 따라 플롯 포인트나 캐릭터에 사용자 정의 속성을 추가할 수 있습니다.
+2. **Plot Point Creation**
+   - Easily create and manage plot points within each work.
+   - Example plot points: "Hero's First Adventure", "Plot Twist", "Climax", etc.
 
-### 사용법
-- Obsidian의 속성 뷰에서 "Add property" 버튼 사용
-- YAML 프론트매터에 새 속성 추가
+3. **Character Creation**
+   - Create and manage characters for each work.
+   - Character info examples: name, role, background, personality, etc.
 
-### 예시
-```yaml
----
-name: 아이린
-custom_property: 값
----
-```
+4. **Tag Filtering**
+   - Use tags to filter plot points and characters.
+   - Example: Filter using tags like "#important", "#unresolved", "#protagonist", etc.
 
-## 7. 폴더 구조 관리
+5. **Status Display**
+   - Visually display the current status of plot points.
+   - Status examples: "Planning", "First Draft", "Revising", "Completed"
 
-### 설명
-플롯 포인트와 캐릭터를 별도의 폴더에 체계적으로 정리합니다.
+6. **Visualization**
+   - Visualize the relationships between works, plot points, and characters in a graph.
+   - Example: See all plot points related to the protagonist at a glance.
 
-### 사용법
-- 플러그인 설정에서 사용자 정의 폴더 경로 설정
-- 기본 폴더: `PlotPoints`와 `Characters`
+7. **Customizable Settings**
+   - Adjust folder structures and plugin behavior to fit your needs.
 
-### 예시 설정
-```
-플롯 포인트 폴더: Story/Plots
-캐릭터 폴더: Story/Cast
-```
+### Detailed Usage
 
+1. **Create a New Work**
+   - Click the PlotMaster icon in the ribbon menu or use the "Create new work" command in the command palette.
+   - Example: Create a new work named "Mystery Novel".
+
+2. **Add Plot Points**
+   - Select a work and use the "Create plot point" command.
+   - Example:
+     ```markdown
+     ---
+     title: Murder Discovery
+     scene: Hotel Lobby
+     status: First Draft
+     ---
+
+     The detective protagonist witnesses the first murder in the hotel lobby.
+     ```
+
+3. **Add Characters**
+   - Select a work and use the "Create character" command.
+   - Example:
+     ```markdown
+     ---
+     name: Detective Smith
+     role: Protagonist
+     background: 20 years of experience as a detective
+     personality: Stubborn but with a strong sense of justice
+     ---
+
+     Detective Smith is the protagonist tasked with solving this serial murder case.
+     ```
+
+4. **View Work Structure**
+   - Select a work in the PlotMaster view to see the list of plot points and characters.
+   - Example: Click on "Mystery Novel" to see all its plot points and characters.
+
+5. **Using Tags**
+   - Add tags to plot points or characters and use them for filtering.
+   - Example: Use the "#suspect" tag to easily find all suspect characters.
+
+6. **Utilizing Visualization**
+   - Enable the visualization feature in settings and check the structure of your work in a graph.
+   - Example: Quickly understand the relationships between major events and related characters.
+
+### Adjusting Settings
+
+In the settings tab, you can adjust the following options:
+- Works folder path (default: 'Works')
+- Plot points folder name (default: 'PlotPoints')
+- Characters folder name (default: 'Characters')
+- Tag filter
+- Enable/disable status display
+- Enable/disable visualization feature
