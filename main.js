@@ -1,7 +1,8 @@
-const { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting } = require('obsidian');
+const { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, TFolder, Modal, Notice } = require('obsidian');
 
 class PlotMasterPlugin extends Plugin {
     DEFAULT_SETTINGS = {
+        worksFolder: 'Works',
         plotPointsFolder: 'PlotPoints',
         charactersFolder: 'Characters',
         tagFilter: '',
@@ -14,24 +15,18 @@ class PlotMasterPlugin extends Plugin {
 
         await this.loadSettings();
 
-        await this.createFolderIfNotExists(this.settings.plotPointsFolder);
-        await this.createFolderIfNotExists(this.settings.charactersFolder);
+        await this.createFolderIfNotExists(this.settings.worksFolder);
 
         this.addRibbonIcon('book', 'PlotMaster', () => {
             this.activateView();
         });
 
-               this.addCommand({
-            id: 'create-plot-point',
-            name: 'Create plot point',
-            callback: () => this.createPlotPoint()
+        this.addCommand({
+            id: 'create-work',
+            name: 'Create new work',
+            callback: () => this.createWork()
         });
 
-        
-
-
-
-// PlotMasterPlugin 클래스 내부
         this.addCommand({
             id: 'create-plot-point',
             name: 'Create plot point',
@@ -69,22 +64,75 @@ class PlotMasterPlugin extends Plugin {
         workspace.revealLeaf(leaf);
     }
 
+    async createWork() {
+        const workName = await this.promptForWorkName();
+        if (!workName) return;
+
+        const workFolder = `${this.settings.worksFolder}/${workName}`;
+        await this.createFolderIfNotExists(workFolder);
+        await this.createFolderIfNotExists(`${workFolder}/${this.settings.plotPointsFolder}`);
+        await this.createFolderIfNotExists(`${workFolder}/${this.settings.charactersFolder}`);
+
+        const workFile = await this.app.vault.create(
+            `${workFolder}/${workName}.md`,
+            '---\ntitle: ' + workName + '\nsummary: \ngenre: \n---\n\n'
+        );
+        this.app.workspace.activeLeaf.openFile(workFile);
+    }
+
+    async promptForWorkName() {
+        const modal = new WorkNameModal(this.app);
+        return new Promise((resolve) => {
+            modal.onClose = () => resolve(modal.workName);
+            modal.open();
+        });
+    }
+
     async createPlotPoint() {
-        await this.createFolderIfNotExists(this.settings.plotPointsFolder);
+        const workFolder = await this.selectWorkFolder();
+        if (!workFolder) return;
+
         const plotPoint = await this.app.vault.create(
-            `${this.settings.plotPointsFolder}/${Date.now()}.md`,
+            `${workFolder}/${this.settings.plotPointsFolder}/${Date.now()}.md`,
             '---\ntitle: \nscene: \nstatus: planning\n---\n\n'
         );
         this.app.workspace.activeLeaf.openFile(plotPoint);
     }
 
     async createCharacter() {
-        await this.createFolderIfNotExists(this.settings.charactersFolder);
+        const workFolder = await this.selectWorkFolder();
+        if (!workFolder) return;
+
+        const workPath = typeof workFolder === 'string' ? workFolder : workFolder.path;
+
+        const characterPath = `${workPath}/${this.settings.charactersFolder}/${Date.now()}.md`;
         const character = await this.app.vault.create(
-            `${this.settings.charactersFolder}/${Date.now()}.md`,
+            characterPath,
             '---\nname: \nrole: \nbackground: \npersonality: \n---\n\n'
         );
         this.app.workspace.activeLeaf.openFile(character);
+    }
+
+    async selectWorkFolder() {
+        const worksFolder = this.app.vault.getAbstractFileByPath(this.settings.worksFolder);
+        if (!(worksFolder instanceof TFolder)) {
+            new Notice('Works folder not found');
+            return null;
+        }
+    
+        const works = worksFolder.children.filter(child => child instanceof TFolder);
+        if (works.length === 0) {
+            new Notice('No works found. Please create a work first.');
+            return null;
+        }
+    
+        const modal = new WorkSelectorModal(this.app, works);
+        const selectedWork = await new Promise((resolve) => {
+            modal.onClose = () => resolve(modal.selectedWork);
+            modal.open();
+        });
+        
+        return selectedWork ? selectedWork.path : null;
     }
 
     async loadSettings() {
@@ -118,24 +166,57 @@ class PlotMasterView extends ItemView {
         const container = this.containerEl.children[1];
         container.empty();
 
-        const plotPointsEl = container.createEl('div');
-        plotPointsEl.createEl('h3', { text: 'Plot points' });
-        const plotPoints = await this.getPlotPoints();
-        this.renderPlotPoints(plotPointsEl, plotPoints);
-
-        const charactersEl = container.createEl('div');
-        charactersEl.createEl('h3', { text: 'Characters' });
-        const characters = await this.getCharacters();
-        this.renderCharacters(charactersEl, characters);
+        const worksEl = container.createEl('div');
+        worksEl.createEl('h3', { text: 'Works' });
+        const works = await this.getWorks();
+        this.renderWorks(worksEl, works);
 
         if (this.plugin.settings.enableVisualization) {
-            this.renderVisualization(container, plotPoints, characters);
+            this.renderVisualization(container, works);
         }
     }
 
-    async getPlotPoints() {
-        const files = this.app.vault.getFiles();
-        let plotPoints = files.filter(file => file.path.startsWith(this.plugin.settings.plotPointsFolder + '/'));
+    async getWorks() {
+        const worksFolder = this.app.vault.getAbstractFileByPath(this.plugin.settings.worksFolder);
+        if (!(worksFolder instanceof TFolder)) return [];
+        return worksFolder.children.filter(child => child instanceof TFolder);
+    }
+
+    renderWorks(containerEl, works) {
+        const ul = containerEl.createEl('ul');
+        for (let work of works) {
+            const li = ul.createEl('li');
+            const link = li.createEl('a', { text: work.name, href: work.path });
+            link.addEventListener('click', (event) => {
+                event.preventDefault();
+                this.renderWorkDetails(containerEl, work);
+            });
+        }
+    }
+
+    async renderWorkDetails(containerEl, work) {
+        containerEl.empty();
+        containerEl.createEl('h3', { text: work.name });
+
+        const plotPointsEl = containerEl.createEl('div');
+        plotPointsEl.createEl('h4', { text: 'Plot points' });
+        const plotPoints = await this.getPlotPoints(work);
+        this.renderPlotPoints(plotPointsEl, plotPoints);
+
+        const charactersEl = containerEl.createEl('div');
+        charactersEl.createEl('h4', { text: 'Characters' });
+        const characters = await this.getCharacters(work);
+        this.renderCharacters(charactersEl, characters);
+
+        if (this.plugin.settings.enableVisualization) {
+            this.renderVisualization(containerEl, [work]);
+        }
+    }
+
+    async getPlotPoints(work) {
+        const plotPointsFolder = work.children.find(child => child.name === this.plugin.settings.plotPointsFolder);
+        if (!(plotPointsFolder instanceof TFolder)) return [];
+        let plotPoints = plotPointsFolder.children;
         if (this.plugin.settings.tagFilter) {
             const tags = this.plugin.settings.tagFilter.split(',').map(tag => tag.trim());
             plotPoints = await this.filterFilesByTags(plotPoints, tags);
@@ -143,9 +224,10 @@ class PlotMasterView extends ItemView {
         return plotPoints;
     }
 
-    async getCharacters() {
-        const files = this.app.vault.getFiles();
-        let characters = files.filter(file => file.path.startsWith(this.plugin.settings.charactersFolder + '/'));
+    async getCharacters(work) {
+        const charactersFolder = work.children.find(child => child.name === this.plugin.settings.charactersFolder);
+        if (!(charactersFolder instanceof TFolder)) return [];
+        let characters = charactersFolder.children;
         if (this.plugin.settings.tagFilter) {
             const tags = this.plugin.settings.tagFilter.split(',').map(tag => tag.trim());
             characters = await this.filterFilesByTags(characters, tags);
@@ -205,64 +287,80 @@ class PlotMasterView extends ItemView {
         return cache && cache.frontmatter && cache.frontmatter.status ? cache.frontmatter.status : 'unknown';
     }
 
-    renderVisualization(containerEl, plotPoints, characters) {
+    renderVisualization(containerEl, works) {
         const visualizationEl = containerEl.createEl('div', { cls: 'plotmaster-visualization' });
         visualizationEl.createEl('h3', { text: 'Story visualization' });
     
         const graphEl = visualizationEl.createEl('div', { cls: 'plotmaster-graph' });
     
-        // Create plot points
-        plotPoints.forEach((plot, index) => {
-            const plotEl = graphEl.createEl('div', { 
-                cls: 'plotmaster-node plotmaster-plot',
-                text: plot.basename
+        works.forEach(async (work, workIndex) => {
+            const plotPoints = await this.getPlotPoints(work);
+            const characters = await this.getCharacters(work);
+            
+            // Create work node
+            const workEl = graphEl.createEl('div', { 
+                cls: 'plotmaster-node plotmaster-work',
+                text: work.name
             });
-            plotEl.style.top = `${index * 60 + 10}px`;
-        });
-    
-        // Create characters
-        characters.forEach((character, index) => {
-            const charEl = graphEl.createEl('div', { 
-                cls: 'plotmaster-node plotmaster-character',
-                text: character.basename
+            workEl.style.top = `${workIndex * 200}px`;
+            
+            // Create plot points
+            plotPoints.forEach((plot, index) => {
+                const plotEl = graphEl.createEl('div', { 
+                    cls: 'plotmaster-node plotmaster-plot',
+                    text: plot.basename
+                });
+                plotEl.style.top = `${workIndex * 200 + index * 60 + 50}px`;
+                plotEl.style.left = '200px';
             });
-            charEl.style.top = `${index * 60 + 10}px`;
+        
+            // Create characters
+            characters.forEach((character, index) => {
+                const charEl = graphEl.createEl('div', { 
+                    cls: 'plotmaster-node plotmaster-character',
+                    text: character.basename
+                });
+                charEl.style.top = `${workIndex * 200 + index * 60 + 50}px`;
+                charEl.style.right = '200px';
+            });
+        
+            // Add connections
+            this.createConnections(graphEl, work, plotPoints.length, characters.length, workIndex);
         });
-    
-        // Add connections
-        this.createConnections(graphEl, plotPoints.length, characters.length);
     
         // Add CSS
-        this.addVisualizationStyles(plotPoints.length, characters.length);
+        this.addVisualizationStyles();
     }
     
-    createConnections(container, plotCount, charCount) {
+    createConnections(container, work, plotCount, charCount, workIndex) {
         const connContainer = container.createEl('div', { cls: 'plotmaster-connections' });
         
-        // Connections between plot points
-        for (let i = 0; i < plotCount - 1; i++) {
-            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-plot' });
-            conn.style.top = `${i * 60 + 30}px`;
-            conn.style.height = '60px';
+        // Connections between work and plot points
+        for (let i = 0; i < plotCount; i++) {
+            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-work-plot' });
+            conn.style.top = `${workIndex * 200 + i * 60 + 70}px`;
+            conn.style.left = '100px';
+            conn.style.width = '100px';
         }
     
-        // Connections between plots and characters
-        const minCount = Math.min(plotCount, charCount);
-        for (let i = 0; i < minCount; i++) {
-            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-character' });
-            conn.style.top = `${i * 60 + 20}px`;
+        // Connections between work and characters
+        for (let i = 0; i < charCount; i++) {
+            const conn = connContainer.createEl('div', { cls: 'plotmaster-connection plotmaster-connection-work-character' });
+            conn.style.top = `${workIndex * 200 + i * 60 + 70}px`;
+            conn.style.right = '100px';
+            conn.style.width = '100px';
         }
     }
     
-    addVisualizationStyles(plotCount, charCount) {
+    addVisualizationStyles() {
         const style = document.createElement('style');
         style.textContent = `
             .plotmaster-graph {
                 position: relative;
-                height: ${Math.max(plotCount, charCount) * 60 + 20}px;
                 border: 1px solid var(--background-modifier-border);
                 margin-top: 20px;
                 background-color: var(--background-secondary);
+                padding: 20px;
             }
             .plotmaster-node {
                 position: absolute;
@@ -270,14 +368,18 @@ class PlotMasterView extends ItemView {
                 border-radius: 5px;
                 background-color: var(--background-primary);
                 border: 1px solid var(--background-modifier-border);
-                max-width: 45%;
+                max-width: 150px;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                z-index: 2;  // 추가된 부분
+                z-index: 2;
+            }
+            .plotmaster-work {
+                left: 10px;
+                font-weight: bold;
             }
             .plotmaster-plot {
-                left: 10px;
+                left: 200px;
             }
             .plotmaster-character {
                 right: 10px;
@@ -289,21 +391,19 @@ class PlotMasterView extends ItemView {
                 right: 0;
                 bottom: 0;
                 pointer-events: none;
-                z-index: 1;  // 추가된 부분
+                z-index: 1;
             }
             .plotmaster-connection {
                 position: absolute;
                 background-color: var(--text-muted);
-            }
-            .plotmaster-connection-plot {
-                left: calc(25% - 1px);
-                width: 2px;
-            }
-            .plotmaster-connection-character {
-                left: 25%;
-                right: 25%;
                 height: 2px;
             }
+            .plotmaster-connection-work-plot {
+                left: 100px;
+            }
+            .plotmaster-connection-work-character {
+                right: 100px
+}
         `;
         document.head.appendChild(style);
     }
@@ -324,8 +424,19 @@ class PlotMasterSettingTab extends PluginSettingTab {
         containerEl.empty();
 
         new Setting(containerEl)
+            .setName('Works folder')
+            .setDesc('Folder path for works')
+            .addText(text => text
+                .setPlaceholder('Works')
+                .setValue(this.plugin.settings.worksFolder)
+                .onChange(async (value) => {
+                    this.plugin.settings.worksFolder = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
             .setName('Plot points folder')
-            .setDesc('Folder path for plot points')
+            .setDesc('Folder name for plot points within each work')
             .addText(text => text
                 .setPlaceholder('PlotPoints')
                 .setValue(this.plugin.settings.plotPointsFolder)
@@ -336,7 +447,7 @@ class PlotMasterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Characters folder')
-            .setDesc('Folder path for characters')
+            .setDesc('Folder name for characters within each work')
             .addText(text => text
                 .setPlaceholder('Characters')
                 .setValue(this.plugin.settings.charactersFolder)
@@ -368,13 +479,63 @@ class PlotMasterSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('Enable visualization')
-            .setDesc('Enable graph visualization for plot points and characters')
+            .setDesc('Enable graph visualization for works, plot points, and characters')
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.enableVisualization)
                 .onChange(async (value) => {
                     this.plugin.settings.enableVisualization = value;
                     await this.plugin.saveSettings();
                 }));
+    }
+}
+
+class WorkNameModal extends Modal {
+    constructor(app) {
+        super(app);
+        this.workName = null;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h2', { text: 'Enter work name' });
+        const input = contentEl.createEl('input', { type: 'text' });
+        const submitButton = contentEl.createEl('button', { text: 'Create' });
+        submitButton.addEventListener('click', () => {
+            this.workName = input.value;
+            this.close();
+        });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+class WorkSelectorModal extends Modal {
+    constructor(app, works) {
+        super(app);
+        this.works = works;
+        this.selectedWork = null;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h2', { text: 'Select work' });
+        const select = contentEl.createEl('select');
+        this.works.forEach(work => {
+            select.createEl('option', { text: work.name, value: work.path });
+        });
+        const submitButton = contentEl.createEl('button', { text: 'Select' });
+        submitButton.addEventListener('click', () => {
+            this.selectedWork = this.works.find(work => work.path === select.value);
+            this.close();
+        });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
     }
 }
 
