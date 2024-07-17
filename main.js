@@ -28,7 +28,7 @@ class PlotMasterPlugin extends Plugin {
         });
 
         
-'Plot Points' → 'Plot points'
+
 'Story Visualization' → 'Story visualization'
 뷰 타입 이름 수정: "Remove -view"는 뷰 타입 이름에서 "-view" 접미사를 제거하라는 의미입니다. 수정해야 할 부분:
 return 'plotmaster-view'; → return 'plotmaster';
