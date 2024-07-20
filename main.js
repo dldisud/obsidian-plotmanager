@@ -1,4 +1,4 @@
-const { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, TFolder, Modal, Notice } = require('obsidian');
+const { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, TFolder, Modal, Notice, normalizePath } = require('obsidian');
 
 class PlotMasterPlugin extends Plugin {
     DEFAULT_SETTINGS = {
@@ -49,8 +49,9 @@ class PlotMasterPlugin extends Plugin {
 
     async createFolderIfNotExists(folderPath) {
         const { vault } = this.app;
-        if (!(await vault.adapter.exists(folderPath))) {
-            await vault.createFolder(folderPath);
+        const normalizedPath = normalizePath(folderPath);
+        if (!(await vault.adapter.exists(normalizedPath))) {
+            await vault.createFolder(normalizedPath);
         }
     }
 
@@ -68,13 +69,13 @@ class PlotMasterPlugin extends Plugin {
         const workName = await this.promptForWorkName();
         if (!workName) return;
 
-        const workFolder = `${this.settings.worksFolder}/${workName}`;
+        const workFolder = normalizePath(`${this.settings.worksFolder}/${workName}`);
         await this.createFolderIfNotExists(workFolder);
-        await this.createFolderIfNotExists(`${workFolder}/${this.settings.plotPointsFolder}`);
-        await this.createFolderIfNotExists(`${workFolder}/${this.settings.charactersFolder}`);
+        await this.createFolderIfNotExists(normalizePath(`${workFolder}/${this.settings.plotPointsFolder}`));
+        await this.createFolderIfNotExists(normalizePath(`${workFolder}/${this.settings.charactersFolder}`));
 
         const workFile = await this.app.vault.create(
-            `${workFolder}/${workName}.md`,
+            normalizePath(`${workFolder}/${workName}.md`),
             '---\ntitle: ' + workName + '\nsummary: \ngenre: \n---\n\n'
         );
         this.app.workspace.activeLeaf.openFile(workFile);
@@ -93,7 +94,7 @@ class PlotMasterPlugin extends Plugin {
         if (!workFolder) return;
 
         const plotPoint = await this.app.vault.create(
-            `${workFolder}/${this.settings.plotPointsFolder}/${Date.now()}.md`,
+            normalizePath(`${workFolder}/${this.settings.plotPointsFolder}/${Date.now()}.md`),
             '---\ntitle: \nscene: \nstatus: planning\n---\n\n'
         );
         this.app.workspace.activeLeaf.openFile(plotPoint);
@@ -104,8 +105,7 @@ class PlotMasterPlugin extends Plugin {
         if (!workFolder) return;
 
         const workPath = typeof workFolder === 'string' ? workFolder : workFolder.path;
-
-        const characterPath = `${workPath}/${this.settings.charactersFolder}/${Date.now()}.md`;
+        const characterPath = normalizePath(`${workPath}/${this.settings.charactersFolder}/${Date.now()}.md`);
         const character = await this.app.vault.create(
             characterPath,
             '---\nname: \nrole: \nbackground: \npersonality: \n---\n\n'
@@ -300,7 +300,7 @@ class PlotMasterView extends ItemView {
             const contentEl = workEl.createEl('div', { cls: 'plotmaster-work-content' });
             
             const plotPointsEl = contentEl.createEl('div', { cls: 'plotmaster-column plotmaster-plotpoints' });
-            plotPointsEl.createEl('h5', { text: 'Plot Points' });
+            plotPointsEl.createEl('h5', { text: 'Plot points' });
             
             const charactersEl = contentEl.createEl('div', { cls: 'plotmaster-column plotmaster-characters' });
             charactersEl.createEl('h5', { text: 'Characters' });
@@ -322,52 +322,6 @@ class PlotMasterView extends ItemView {
                 });
             });
         });
-    
-        this.addImprovedVisualizationStyles();
-    }
-    
-    addImprovedVisualizationStyles() {
-        const style = document.createElement('style');
-        style.textContent = `
-            .plotmaster-visualization {
-                margin-top: 20px;
-                border: 1px solid var(--background-modifier-border);
-                padding: 10px;
-                background-color: var(--background-secondary);
-            }
-            .plotmaster-work-container {
-                margin-bottom: 30px;
-                padding: 10px;
-                border: 1px solid var(--background-modifier-border);
-                border-radius: 5px;
-            }
-            .plotmaster-work-header {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-            .plotmaster-work-title {
-                font-weight: bold;
-            }
-            .plotmaster-work-content {
-                display: flex;
-                justify-content: space-between;
-            }
-            .plotmaster-column {
-                width: 48%;
-            }
-            .plotmaster-column h5 {
-                text-align: center;
-                margin-bottom: 10px;
-            }
-            .plotmaster-item {
-                padding: 5px 10px;
-                margin: 5px 0;
-                background-color: var(--background-primary);
-                border: 1px solid var(--background-modifier-border);
-                border-radius: 5px;
-            }
-        `;
-        document.head.appendChild(style);
     }
 
     async onClose() {
