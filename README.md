@@ -1,8 +1,8 @@
-# PlotMaster
+# PlotManager
 
 ## 한국어
 
-PlotMaster는 작가들이 여러 작품의 플롯과 캐릭터를 효과적으로 관리할 수 있도록 도와주는 Obsidian 플러그인입니다.
+PlotManager는 작가들이 여러 작품의 플롯과 캐릭터를 효과적으로 관리할 수 있도록 도와주는 Obsidian 플러그인입니다.
 
 ### 주요 기능
 
@@ -90,7 +90,7 @@ PlotMaster는 작가들이 여러 작품의 플롯과 캐릭터를 효과적으�
 
 ## English
 
-PlotMaster is an Obsidian plugin designed to help writers effectively manage plots and characters across multiple works.
+PlotManager is an Obsidian plugin designed to help writers effectively manage plots and characters across multiple works.
 
 ### Key Features
 
