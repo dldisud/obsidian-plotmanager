@@ -175,3 +175,6 @@ In the settings tab, you can adjust the following options:
 - Tag filter
 - Enable/disable status display
 - Enable/disable visualization feature
+
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/D1D710BIPE)
